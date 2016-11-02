@@ -1,11 +1,11 @@
 # Switzerland and Trains
 ## Abstract
 Switzerland possess one of the densest train networks in the world.
-More than 15%[^1] of people working in Switerland comute by train; a proportion that goes over 80% for people comuting between the cities biggest cities.
+More than 15% [^1] of people working in Switerland comute by train; a proportion that goes over 80% for people comuting between the cities biggest cities.
 
 We decided to dive down on the train users habits and see how our train network is effectively used. We will do this analysis with two different focuses. First we'll look at the train occupancy through time and space. Secondly we'll investigate the relationship between the number of trains arriving at a station and the size of the cities hosting the station.
 ## Data description
-The main data set we'll use is the one provided direcly by SBB (swiss railway company covering the whole country) and we'll complement it with either Wikipedia data or Swiss Government data (or even both) to get informations about the cities related to the train stations.
+The main data set we'll use is the one provided direcly by SBB (swiss railway company covering the whole country) [^2] and we'll complement it with either Wikipedia data or Swiss Government data [^3] (or even both) to get informations about the cities related to the train stations.
 So for the first part we'll use data about the train occupancy and coordinates of the relevant cities.
 For the second part we'll need data about the train timetable to see how many connections there are, we'll also need as much informations about the cites in order to establish a feature list for our ml pipeline in order to try and predict how many connections a city will get.
 ## Feasability and risks
@@ -15,7 +15,7 @@ The Wikipedia Dataset is also clean should allow us to retrieve swiss cities inf
 
 ### Risks
 We want to make a dynamic yet readable visualisation of the train occupancy depending on the time of the week (allowing you to travel throught time). But none of us as any experience in doing such a custom tailored visualisation.  
-We also do not know which ml pipeline and data features to use to predict train/hour vs city size. There are a lot of factor to account for and we fear that, depending on what we include or not, our results won't be conclusive.
+We also do not know which ml pipeline and data features to use to predict train/hour vs city. There are a lot of factor to account for and we fear that, depending on what we include or not, our results won't be conclusive.
 
 ## Deliverables
 Our main deliverable will be a single page web-app (stack not yet decided) displaying our analysis and visualisations in the nicest possible way.
@@ -34,3 +34,5 @@ That being said here is a plan on how we roughly see things going:
 * __End. January:__ Final version of the sildes for the mini-symposium
 
 [^1]: [Swiss Infos: Les Suisses se déplacent toujours plus loin pour aller au travail](http://www.swissinfo.ch/fre/les-suisses-se-d%C3%A9placent-toujours-plus-loin-pour-aller-au-travail/41507140)
+[^2]: [http://data.sbb.ch/](http://data.sbb.ch/page/einstieg/)
+[^3]: [https://opendata.swiss/en/](https://opendata.swiss/en/)
