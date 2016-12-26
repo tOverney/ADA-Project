@@ -1,0 +1,39 @@
+backend:
+  build: ./backend
+  expose:
+    - "8000"
+  links:
+    - database:database
+    - cache 
+  volumes:
+    - ./backend:/usr/src/app
+    - /usr/src/app/static
+  env_file: .env
+  environment:
+    DEBUG: 'true'
+  command: /usr/local/bin/gunicorn backend_django.wsgi:application -w 2 -b :8000 --reload
+
+database:
+  image: mdillon/postgis
+  ports:
+    - "5432:5432"
+  volumes:
+    - pgdata:/var/lib/postgresql/data/
+
+nginx:
+  build: ./nginx/
+  ports:
+    - "80:80"
+  volumes:
+    - /www/static
+  volumes_from:
+    - backend
+  links:
+    - backend:backend
+
+cache:
+  image: redis:latest
+  ports:
+    - "6379:6379"
+  volumes:
+    - /var/lib/redis/data

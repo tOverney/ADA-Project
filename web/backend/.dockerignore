@@ -1,0 +1,5 @@
+.DS_Store
+.dockerignore
+Dockerfile
+*.pyc
+__pycache__/*

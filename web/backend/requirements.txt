@@ -1,0 +1,13 @@
+Django==1.8.1
+gunicorn==19.3.0
+psycopg2==2.6
+redis==2.10.3
+multigtfs
+djangorestframework
+django-filter
+django-redis
+django-redis-cache
+drf-extensions
+django-cachalot
+django-debug-toolbar
+rest-framework-cache
