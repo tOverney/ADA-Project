@@ -15,6 +15,17 @@
     docker-compose up
 
 ## Setup Django
+    
+    # Create env file
+    touch .env
+
+        Example
+        SECRET_KEY=5(15ds+i2+%ik6z&!yer+ga9m=e%jcqiz_5wszg)r-z!2--b2d
+        DB_NAME=explore
+        DB_USER=explore
+        DB_PASS=explore
+        DB_SERVICE=database
+        DB_PORT=5432
 
     # Setup Database
     docker exec -it web_database_1 bash
@@ -28,9 +39,12 @@
     docker exec -it web_backend_1 bash
     ./manage.py syncdb
     ./manage.py migrate
-    ./manage.py createsuperuser
     
-    # Import Data
+    # Import Dump
+    ./manage.py loaddata dump.data
+
+    # Import Data (Optional)
+    ./manage.py createsuperuser
     ./manage.py importgtfs --name "test" gtfs_train.zip
 
 ## Clean Docker
