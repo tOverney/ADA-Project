@@ -8,6 +8,7 @@ backend:
   volumes:
     - ./backend:/usr/src/app
     - /usr/src/app/static
+    - ./shared:/shared
   env_file: .env
   environment:
     DEBUG: 'true'
@@ -19,7 +20,7 @@ database:
     - "5432:5432"
   volumes:
     - pgdata:/var/lib/postgresql/data/
-
+    - ./shared:/shared
 nginx:
   build: ./nginx/
   ports:
@@ -37,3 +38,4 @@ cache:
     - "6379:6379"
   volumes:
     - /var/lib/redis/data
+    - ./shared:/shared
