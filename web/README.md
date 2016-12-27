@@ -37,13 +37,15 @@
 
     # Setup Django
     docker exec -it web_backend_1 bash
-    ./manage.py syncdb
-    ./manage.py migrate
-    
-    # Import Dump
-    ./manage.py loaddata dump.data
+    ./manage.py collectstatic
+
+    # Import database dump
+    docker exec -it web_database_1 bash
+    psql -d *DB_NAME* -U *DB_USER* < /shared/dump.data
 
     # Import Data (Optional)
+    ./manage.py syncdb
+    ./manage.py migrate
     ./manage.py createsuperuser
     ./manage.py importgtfs --name "test" gtfs_train.zip
 
@@ -86,5 +88,8 @@ Then we can load the dataset in the database
         
         - date (format 2016-12-02)
         - time (format 12:00)
-        - agency (format _id_)
+        - agency (format _id_) (multiple allowed)
         - service (format True/false)
+
+        Example
+        192.168.99.101/api/trip/?date=2017-01-09&agency=52&time=12:00

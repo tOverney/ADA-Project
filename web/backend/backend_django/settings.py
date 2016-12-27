@@ -111,6 +111,8 @@ DATABASES = {
     }
 }
 
+POSTGIS_VERSION = (2, 3, 1)
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
 
