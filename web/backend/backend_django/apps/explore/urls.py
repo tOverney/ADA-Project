@@ -7,4 +7,5 @@ from multigtfs.models import (
 urlpatterns = patterns(
     '',
     url(r'route/(?P<pk>\d+)/$', DetailView.as_view(model=Route), name='route_detail'),
+    url(r'stop/(?P<pk>\d+)/$', DetailView.as_view(model=Stop), name='stop_detail'),
 )
