@@ -5,7 +5,7 @@ from .views import *
 from rest_framework_extensions.routers import ExtendedSimpleRouter
 
 urlpatterns = [
-    url(r'^trip/$', TripByDay.as_view() , name='route-list'),
+    url(r'^trip/$', TestTripByDay.as_view() , name='trip-list'),
 ]
 
 router = ExtendedSimpleRouter()

@@ -11,3 +11,4 @@ drf-extensions
 django-cachalot
 django-debug-toolbar
 rest-framework-cache
+numpy

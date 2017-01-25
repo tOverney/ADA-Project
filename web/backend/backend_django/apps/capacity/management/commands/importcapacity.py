@@ -33,11 +33,14 @@ class Command(BaseCommand):
             except:
                 return -1
 
+        print(sum(1 for line in open(i, 'r')))
         csv_reader = reader(open(i, 'r'))
         CSV_BOM = BOM_UTF8.decode('utf-8') if PY3 else BOM_UTF8
-        first = True
         
-        for row in csv_reader:
+        first = True
+        for i,row in enumerate(csv_reader):
+            if i  % 1000 == 0:
+                print(i)
             if first:
                 # Read the columns
                 columns = row
@@ -48,14 +51,16 @@ class Command(BaseCommand):
                 continue
             try:
                 _, created = Capacity.objects.get_or_create(
-                    trip_id=int(float(row[2])),
-                    service_date_id=int(float(row[4])),
-                    stop_time_id=int(float(row[5])),
-                    capacity1st=int_convert_capacity(row[6]),
-                    capacity2nd=int_convert_capacity(row[7]),
+                    trip_id=int(float(row[7])),
+                    stop_time_id=int(float(row[10])),
+                    service_date_id=int(float(row[2])),
+                    capacity1st=int_convert_capacity(row[-2]),
+                    capacity2nd=int_convert_capacity(row[-1]),
                 )
+                pass
+
+
             except Exception as e:
-        
                 self.stdout.write("Error with row {} : {}".format(row, e))
 
 

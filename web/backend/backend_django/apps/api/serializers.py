@@ -1,5 +1,5 @@
 
-from ..capacity.models import Capacity
+from ..capacity.models import Capacity, Path
 
 from multigtfs.models import (
     Block, Fare, FareRule, Feed, Frequency, Route, Service, ServiceDate, Shape,
@@ -8,6 +8,8 @@ from multigtfs.models import (
 from rest_framework import serializers
 from rest_framework_cache.serializers import CachedSerializerMixin
 from rest_framework_cache.registry import cache_registry
+from ast import literal_eval
+import re 
 
 class AgencySerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,23 +34,16 @@ class StopSerializer(serializers.ModelSerializer):
 #
 ######################################
 
-class CapacitySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Capacity
-        fields = ('id', 'capacity1st','capacity2nd')
-
 
 class StopTimeSerializer(serializers.ModelSerializer):
-    stop_id_full = serializers.CharField(source='stop.stop_id', read_only=True)
-    stop_id =serializers.SerializerMethodField()
-    stop_name = serializers.CharField(source='stop.name', read_only=True)
-    capacity = CapacitySerializer(many=True, read_only=True, source='capacity_set')
-    
+    station_id = serializers.SerializerMethodField()
+    path = serializers.SerializerMethodField()
+   
     class Meta:
         model = StopTime
-        fields =  ('id', 'stop', 'stop_id','stop_id_full','stop_name','arrival_time','departure_time','stop_sequence', 'capacity')
+        fields =  ('station_id', 'arrival_time', 'departure_time', 'path')
 
-    def get_stop_id(self, obj):
+    def get_station_id(self, obj):
         s = obj.stop.stop_id
         try:
             index = s.index(':')
@@ -56,41 +51,40 @@ class StopTimeSerializer(serializers.ModelSerializer):
             index = len(s)
         return s[:index]
 
-
-class ServiceDateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ServiceDate
-        fields =  ('id', 'date',)
-
-
-class ServiceSerializer(serializers.ModelSerializer):
-    dates = ServiceDateSerializer(many=True, read_only=True, source='servicedate_set')
-    class Meta:
-        model = Service
-        fields =  ('id', 'service_id' , 'dates')
-
-
-class RouteSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Route
-        fields =  ('id', 'route_id', 'short_name', 'long_name', 'rtype', 'agency')
+    def get_path(self, obj):
+        try:
+            paths = Path.objects.get(trip_id=obj.trip_id, stop_id=obj.stop_id)
+            return literal_eval(paths.path)
+        except Path.DoesNotExist:
+            return []
 
 
 class TripSerializer(serializers.ModelSerializer):
-    start = serializers.CharField()
-    end = serializers.CharField()
-    count = serializers.IntegerField()
-    route = RouteSerializer()
+    trip_id = serializers.SerializerMethodField()
+    trip_short_name = serializers.CharField(source='route.short_name', read_only=True)
+    trip_vehicle = serializers.SerializerMethodField()
     stops = StopTimeSerializer(many=True, read_only=True, source='stoptime_set')
     
     class Meta:
         model = Trip
-        fields = ('id', 'headsign' , 'short_name' ,'route' , 'service', 'start', 'end', 'count', 'stops',)
+        fields = ('trip_id', 'trip_short_name', 'trip_vehicle', 'stops')
+
+    def get_trip_id(self, obj):
+        s = obj.trip_id
+        try:
+            index = s.index(':')
+        except ValueError:
+            index = len(s)
+        return s[:index]
+
+    def get_trip_vehicle(self, obj):
+        s = obj.route.short_name
+        r = re.compile("([a-zA-Z]*)\d*")
+        c = r.match(s)
+        if c :
+            return c.group(1).lower()
+        else :
+            return s
 
 
-class TripWithServiceSerializer(TripSerializer):
-    service = ServiceSerializer()
-
-    class Meta:
-        model = Trip
-        fields = ('id', 'headsign' , 'short_name' ,'route' , 'service', 'start', 'end', 'count', 'stops',)
+            
