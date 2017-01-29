@@ -8,5 +8,6 @@ libraryDependencies ++= Seq(
   "commons-io" % "commons-io" % "2.5",
   "com.typesafe.akka" %% "akka-http" % "10.0.3",
   "com.typesafe.akka" %% "akka-http-spray-json" % "10.0.3",
-  "com.github.tototoshi" %% "scala-csv" % "1.3.4"
+  "com.github.tototoshi" %% "scala-csv" % "1.3.4",
+  "ch.megard" %% "akka-http-cors" % "0.1.10"
 )
