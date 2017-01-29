@@ -39,7 +39,9 @@ case class CacheHandler(interval: Int) {
   def printCache(): Unit = {
     println("--- Cache entries ---")
     for (entry <- cache.toList) {
-      println(entry._1.toString() + " -> " + entry._2.result.prettyPrint)
+      // We drop the timezone, seconds and milliseconds
+      println(entry._1.toString().dropRight(13) + " -> " +
+          entry._2.result.prettyPrint)
     }
     println("---------------------")
   }
@@ -54,6 +56,7 @@ case class CacheHandler(interval: Int) {
     val result = engine.aggregate(date)
     val res = CachedResult(date, interval, result)
     cache += ((date, res))
+
     res.writeOut()
 
     res

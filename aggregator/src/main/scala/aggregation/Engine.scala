@@ -3,14 +3,16 @@ package aggregation
 import com.github.nscala_time.time.Imports._
 import com.github.tototoshi.csv.CSVReader
 import spray.json._
+import spray.json.DefaultJsonProtocol._
 import java.io.File
-import scala.collection.mutable.Map
+import scala.collection.mutable.{Map => MuMap}
+import scala.collection.immutable.{Map => ImmuMap}
 
 import utils.DateUtils._
 
 case class Engine(interval: Int) {
   val validTimeSpan: ValidDateTimeSpan = fetchAvailableData()
-  val cachedData: Map[String, List[Stop]] = Map()
+  val cachedData: MuMap[String, List[Itinerary]] = MuMap()
 
   def fetchAvailableData(): ValidDateTimeSpan = {
     val dataDir = new File(s"../data")
@@ -31,15 +33,14 @@ case class Engine(interval: Int) {
 
     val allDates = allData.map(date => DateTime.parse(date, formatterDateOnly))
 
-    // find min date
+    // Find min and max dates that can be queried
     val firstDate :: otherDates = allDates.toList
     val (minDate, maxDayDate) = otherDates.foldLeft((firstDate, firstDate)){
       case ((min, max), curr) =>
         (if (curr < min) curr else min, if (curr > max) curr else max)
     }
-
     val maxDate = maxDayDate.lastStartIntervalOfDay(interval)
-    // TODO compute max date correctly
+
     ValidDateTimeSpan(minDate, maxDate, interval)
   }
 
@@ -49,14 +50,56 @@ case class Engine(interval: Int) {
 
     val dateToLoad = startDate.toLocalDate().toString()
 
-    cachedData.getOrElse(dateToLoad, loadDataFile(dateToLoad))
-    JsTrue
+    val itineraries =
+        cachedData.getOrElse(dateToLoad, computeCacheValue(dateToLoad))
+
+    val res = aggregateItineraries(itineraries, startDate)
+
+    res.toJson
+  }
+
+  def computeCacheValue(dateToLoad: String): List[Itinerary] = {
+      val stops = loadDataFile(dateToLoad)
+      val itineraries = computeItineraries(stops)
+      cachedData += (dateToLoad -> itineraries)
+      itineraries
   }
 
   def loadDataFile(dateToLoad: String): List[Stop] = {
+    println("Data for day not loaded!")
     val fileName = "../data/" + dateToLoad + "_out.csv"
-    val allRawStops = CSVReader.open(new File(fileName)).all()
+    // we need to drop the header
+    CSVReader.open(new File(fileName)).all().drop(1).map(row => Stop(row))
+  }
 
-    allRawStops.map(stop => Stop(stop))
+  def computeItineraries(stops: List[Stop]): List[Itinerary] = {
+    val allItineraries = for {
+      tripUnsorted <- stops.groupBy(s => s.tripId).values.toList
+    } yield {
+      val start :: trip = tripUnsorted.sortBy(_.departureTime)
+      val (itineraries, _)  = trip.foldLeft(List[Itinerary](), start){
+        case ((acc, beg), end) =>
+          (acc :+ Itinerary(beg, end), end)
+      }
+      itineraries
+    }
+    allItineraries.flatten.filterNot(_.path.isEmpty)
+  }
+
+  def aggregateItineraries(itineraries: List[Itinerary],
+      intStart: DateTime): ImmuMap[String, Int] = {
+    val res: MuMap[String, Int] = MuMap()
+    val intEnd = intStart + interval.minutes
+
+    itineraries.foreach {
+      case Itinerary(start, stop, path, amnt) =>
+        if (intStart < stop && intEnd > start) {
+          path.foreach { seg =>
+            val newAmount = res.getOrElse(seg, 0) + amnt
+            res += (seg -> newAmount)
+          }
+        }
+    }
+    res.toMap
   }
 }

@@ -44,25 +44,33 @@ object Main extends App {
   } ~ get {
     pathPrefix("occupancy" / IntNumber / DateRegex) {
       (reqInterval, stringDate) =>
-        if (interval != reqInterval) {
-          complete(StatusCodes.BadRequest)
-        } else {
-          val time = DateTime.parse(stringDate, formatter)
-          if (time.isAcceptableDate) {
-            val res = getRequestedResult(time)
-            complete(HttpEntity(ContentTypes.`application/json`, res))
-          } else {
+        try {
+          if (interval != reqInterval) {
+            println("ERROR: Got a request for a different time interval than "
+                + interval)
             complete(StatusCodes.BadRequest)
+          } else {
+            val time = DateTime.parse(stringDate, formatter)
+            if (time.isAcceptableDate) {
+              val res = getRequestedResult(time)
+              complete(HttpEntity(ContentTypes.`application/json`, res))
+            } else {
+              complete(StatusCodes.BadRequest)
+            }
           }
+        // In case of something going wrong with the request, the server stays up!
+        } catch {
+          case e: Throwable =>
+            println("Something went wrong! Probably because the date requested is not valid")
+            e.printStackTrace()
+            complete(StatusCodes.BadRequest)
         }
     }
   }
 
   def getRequestedResult(time: DateTime): String = {
     val fetchResult = cacheHandler.fetch(time)
-    val res = fetchResult.result.prettyPrint
-    cacheHandler.printCache()
-    res
+    fetchResult.result.prettyPrint
   }
 
 
@@ -70,15 +78,15 @@ object Main extends App {
   val serverFuture = Http().bindAndHandle(api, host, port)
 
 
-  // testing
-  val time = DateTime.parse("2017-01-30T07:00", formatter)
-  if (time.isAcceptableDate) {
-    getRequestedResult(time)
-  } else {
-    println("ERROR: Date is not in range")
-  }
+  // // testing
+  // val time = DateTime.parse("2017-01-30T07:00", formatter)
+  // if (time.isAcceptableDate) {
+  //   getRequestedResult(time)
+  // } else {
+  //   println("ERROR: Date is not in range")
+  // }
 
   // Shutting down the server on <Enter> pressed
-  // StdIn.readLine()
+  StdIn.readLine()
   serverFuture.flatMap(_.unbind()).onComplete(_ => system.terminate())
 }
