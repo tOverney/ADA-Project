@@ -1,9 +1,26 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <style type="text/css">
-        html, body { height: 100%; margin: 0; padding: 0; }
-        #map { height: 100%; }
+<meta charset="utf-8">
+    <head>
+        <style>
+        .edges {
+          fill: none;
+          stroke: #00c;
+        }
+
+        #thissvg {
+            position:absolute;
+            left:0;
+            top:0;
+            z-index: 50;
+        }
+
+        #map-canvas {
+            position:absolute;
+            left:0;
+            top:0;
+            z-index: 30;
+        }
 
         #control {
             position: absolute;
@@ -12,157 +29,233 @@
             top: 50px;
             padding: 10px;
             margin: 0px;
+            z-index:9999;
             background-color: #EEEEEE;
             border: solid #646464 1px;
         }
-    </style>
-</head>
-<body>
-<div id="map"></div>
-<div id="control">
-    <div>Time: <span id="time"></span></div>
-    <div>Speed:
-    <select id="speed" onchange="onSpeedChange(this)">
-        <option value="1">1x</option>
-        <option value="2">2x</option>
-        <option value="5">5x</option>
-        <option value="10">10x</option>
-    </select>
-    </div>
-</div>
-<script type="text/javascript">
 
+        </style>
+        <script src="http://maps.googleapis.com/maps/api/js?key=AIzaSyC7nuVovjQYfAQdMIcf0XcPTtOEqIfEnBY&v=3.exp&sensor=false"></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+        <script src="http://d3js.org/d3.v3.min.js"></script>
+        <script src="http://d3js.org/queue.v1.min.js"></script>
+        <script>
 
-    var map;
-    var segments;
-    var date;
-    var intervalMin = 15;
-    var refreshRate = 1.5;
-    var minSpeed = intervalMin*60;
-    var speed = minSpeed;
-    var colors = ["#1a9850", "#91cf60", "#d9ef8b", "#fee08b", "#fc8d59", "#d73027"];
-
-    var maxValue = 0;
-    function initMap() {
-        map = new google.maps.Map(document.getElementById('map'), {
-            center: {lat: 46.48, lng: 8.13},
-            zoom: 8
-        });
-
-        map.data.loadGeoJson('http://localhost:8080/edges/');
-        map.data.loadGeoJson('http://localhost:8080/switzerland/');
-        date = new Date();
-        date.setSeconds(0);
-        date.setMinutes(parseInt(date.getMinutes()/intervalMin)*intervalMin);
-        date.setMonth(0, 30);
-        segments = getNextSegments();
-        map.data.setStyle(getStyle);
-
-        window.setTimeout(update, refreshRate * 1000);
-    }
-
-    function onSpeedChange(opt) {
-        speed = parseInt(opt.value) * minSpeed;
-    }
-
-    function update() {
-        window.setTimeout(update, refreshRate * 1000);
-        // update date/time
-        date.setSeconds(date.getSeconds() + speed);
-
-        // get new segments
-        getNextSegments();
-    }
-
-    function onSuccess(data) {
-        segments = fromJson(data);
-
-        map.data.setStyle(getStyle);
-
-        document.getElementById("time").innerText = date.toTimeString();
-    }
-
-    function onError() {
-        alert("Something went wrong.");
-    }
-
-    function getStyle(feature) {
-        var id = feature.getProperty('edge_id');
-        if(id == 0) {
-            return {
-                fillColor: 'blue',
-                strokeWeight: 1
+            var mapOptions = {
+                center: {lat: 46.70, lng: 8.13},
+                zoom: 8,
+                streetViewControl: false,
+                scrollwheel: false,
+                navigationControl: false,
+                mapTypeControl: false,
+                scaleControl: false,
+                draggable: false,
+                styles: [{"featureType":"all","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"administrative","elementType":"labels.text.fill","stylers":[{"color":"#444444"}]},{"featureType":"administrative.country","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"administrative.country","elementType":"geometry.stroke","stylers":[{"lightness":"12"}]},{"featureType":"administrative.country","elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"administrative.province","elementType":"all","stylers":[{"visibility":"on"},{"lightness":"-100"},{"saturation":"-100"},{"weight":"1.00"}]},{"featureType":"administrative.province","elementType":"geometry","stylers":[{"visibility":"off"}]},{"featureType":"administrative.province","elementType":"geometry.fill","stylers":[{"visibility":"simplified"}]},{"featureType":"administrative.locality","elementType":"all","stylers":[{"visibility":"off"},{"hue":"#ff0000"},{"saturation":"-82"},{"lightness":"5"},{"gamma":"4.71"}]},{"featureType":"administrative.locality","elementType":"labels","stylers":[{"visibility":"off"},{"weight":"0.01"}]},{"featureType":"administrative.neighborhood","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"landscape","elementType":"all","stylers":[{"hue":"#ff0000"},{"visibility":"off"}]},{"featureType":"landscape","elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"landscape.man_made","elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"landscape.natural","elementType":"geometry","stylers":[{"visibility":"off"}]},{"featureType":"landscape.natural.landcover","elementType":"all","stylers":[{"visibility":"on"}]},{"featureType":"landscape.natural.landcover","elementType":"geometry","stylers":[{"visibility":"off"}]},{"featureType":"landscape.natural.landcover","elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"landscape.natural.terrain","elementType":"all","stylers":[{"visibility":"on"}]},{"featureType":"landscape.natural.terrain","elementType":"geometry","stylers":[{"visibility":"on"},{"lightness":"30"},{"saturation":"-100"}]},{"featureType":"landscape.natural.terrain","elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"poi","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"road","elementType":"all","stylers":[{"saturation":-100},{"lightness":45},{"visibility":"off"}]},{"featureType":"road","elementType":"geometry","stylers":[{"visibility":"off"}]},{"featureType":"road","elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"road.highway","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"road.arterial","elementType":"labels.icon","stylers":[{"visibility":"off"}]},{"featureType":"transit","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"water","elementType":"all","stylers":[{"color":"#46bcec"},{"visibility":"on"}]},{"featureType":"water","elementType":"geometry","stylers":[{"visibility":"on"},{"lightness":"10"}]},{"featureType":"water","elementType":"labels","stylers":[{"visibility":"off"}]}]
             }
-        } else {
-            var colorValue = segments[id];
-            if(!segments[id]) {
-                colorValue = 0;
+
+
+            var width = 1000,
+                height = 800,
+            globalOverlay = null,
+            map = null;
+            var url = 'http://localhost:8080/edges/';
+
+            var projection;
+            var path;
+            var g_;
+
+            var edges;
+            var segments;
+            var date;
+            var intervalMin = 15;
+            var refreshRate = 1.5;
+            var minSpeed = intervalMin*60;
+            var speed = minSpeed;
+
+
+            var blue = "#91cf60";
+            var red = "#fc8d59";
+
+
+            function init_map() {
+
+                width = $(window).width();
+                height = $(window).height();
+
+                jQuery('#map-canvas').width(width);
+                jQuery('#map-canvas').height(height);
+
+                console.log(width)
+
+                map = new google.maps.Map(
+                    document.getElementById('map-canvas'), 
+                    mapOptions
+                );
+
+                var edgesback = new google.maps.Data();
+                var border = new google.maps.Data();
+
+                border.loadGeoJson('http://localhost:8080/switzerland/');
+                border.setMap(map);
+                border.setStyle({
+                    strokeColor: "#757575",
+                    strokeWeight: 1,
+                    fillColor:  "black",
+                })
             }
-            var c = color(colorValue);
 
-            return {
-                strokeColor: c,
-                strokeWeight: 2
-            };
-        }
-    }
+            function init_edges(){
+                projection=projection=d3.geo.mercator()
+                    .scale(40.5 * Math.pow(2, map.getZoom()))
+                    .translate([0,0]);
 
+                path = d3.geo.path().projection(projection);
+        
+                g_=     d3.select('#thissvg')
+                    .attr("width", 900)
+                    .attr("height", 600)
+                    .append("g")
+                    .attr("class", "edges")
+                    .attr("id","pathgroup")
+            }
+            
+            function initialize() {
+                init_map();             
+                init_edges();
 
-    function color(value) {
-        var nbColors = colors.length;
-        var colorId = Math.min(Math.floor(value * nbColors / 1500), nbColors - 1);
-        return colors[colorId];
-    }
+                date = new Date();
+                date.setSeconds(0);
+                date.setMinutes(parseInt(date.getMinutes()/intervalMin)*intervalMin);
+                date.setMonth(0, 30);
+       
+                function ready(error, us) {
+                    console.log(us);
+                    g_.selectAll("path")
+                        .data(us.features)
+                        .enter().append("path")
+                        .attr("d", path);
 
-    function getNextSegments() {
+                    var centerPixel = projection([map.getCenter().lng(), map.getCenter().lat()]);
+                    var translate = [(width / 2 - centerPixel[0]), (height / 2 - centerPixel[1])];
+                    d3.select("#pathgroup").attr("transform", "translate(" + translate + ")scale(1)");
 
-        var dateAsString = date.toISOString().substring(0, 16);
-
-
-        getJSON("http://localhost:8080/occupancy/"+intervalMin+"/"+ dateAsString, onSuccess, onError);
-
-    }
-
-    function fromJson(json) {
-        var segments = {};
-        maxValue = 0;
-        for(var key in json) {
-            if (json.hasOwnProperty(key)) {
-                segments[key] = json[key];
-                if(json[key] > maxValue) {
-                    maxValue = json[key];
+                    segments = getNextSegments();
+                    window.setTimeout(update, refreshRate * 1000);
                 }
+
+                queue()
+                    .defer(d3.json, url)
+                    .await(ready);
+                 
             }
-        }
-        return segments
-    }
+
+            function onSpeedChange(opt) {
+                speed = parseInt(opt.value) * minSpeed;
+            }
+
+            function update() {
+                window.setTimeout(update, refreshRate * 1000);
+                date.setSeconds(date.getSeconds() + speed);
+                getNextSegments();
+            }
+
+            function onSuccess(data) {
+                segments = fromJson(data);
+                updateEdges()
+                document.getElementById("time").innerText = date.toTimeString();
+                document.getElementById("date").innerText = date.toDateString();
+            }
+
+            function onError() {
+               console.log("Something went wrong.");
+            }
 
 
-    function getJSON(url, successHandler, errorHandler) {
-        var req = new XMLHttpRequest();
-
-        if('withCredentials' in req) {
-            req.open('GET', url, true);
-            req.onreadystatechange = function() {
-                if (req.readyState === 4) {
-                    if (req.status >= 200 && req.status < 400) {
-                        data = JSON.parse(req.responseText);
-                        successHandler(data);
-                    } else {
-                        errorHandler();
+            function getNextSegments() {
+                var dateAsString = date.toISOString().substring(0, 16);
+                getJSON("http://localhost:8080/occupancy/"+intervalMin+"/"+ dateAsString, onSuccess, onError);
+            }
+            var maxValue = 1;
+            function fromJson(json) {
+                var segments = {};
+                maxValue = 0
+                for(var key in json) {
+                    if (json.hasOwnProperty(key)) {
+                        segments[key] = json[key];
+                        if(json[key] > maxValue) {
+                            maxValue = json[key];
+                        }
                     }
                 }
-            };
-            req.send();
-        }
-    }
+                return segments
+            }
 
 
+            function getJSON(url, successHandler, errorHandler) {
+                var req = new XMLHttpRequest();
 
-</script>
-<script src="http://openlayers.org/api/OpenLayers.js"></script>
-<script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC7nuVovjQYfAQdMIcf0XcPTtOEqIfEnBY&callback=initMap">
-</script>
-</body>
+                if('withCredentials' in req) {
+                    req.open('GET', url, true);
+                    req.onreadystatechange = function() {
+                        if (req.readyState === 4) {
+                            if (req.status >= 200 && req.status < 400) {
+                                data = JSON.parse(req.responseText);
+                                successHandler(data);
+                            } else {
+                                errorHandler();
+                            }
+                        }
+                    };
+                    req.send();
+                }
+            }
+
+            function updateEdges(){
+                var colorScale = d3.scale.linear()
+                    .domain([0, 2000])
+                    // .interpolate(d3.interpolateHcl)
+                    .range([d3.rgb('#00BF15'), d3.rgb('#D90200')]);
+
+                var widthScale = d3.scale.linear()
+                    .domain([0, 3000])
+                    .range([2,6]);
+
+                g_.selectAll("path")
+                .transition()
+                .attr('stroke-width', function(d, i) {
+                    return widthScale(segments[i])
+                })
+                .attr('stroke', function(d, i) {
+                    if(segments[i]) {
+                        return colorScale(segments[i])
+                    } else {
+                        return '#bdbdbd'
+                    }
+                })
+                .style("stroke-linecap", "round")
+            }
+
+            google.maps.event.addDomListener(window, 'load', initialize);
+
+        
+
+
+        </script>
+    </head>
+    <body>
+        <div id="control">
+         <div>Date: <span id="date"></span></div>
+            <div>Time: <span id="time"></span></div>
+            <div>Speed:
+                <select id="speed" onchange="onSpeedChange(this)">
+                    <option value="1">1x</option>
+                    <option value="2">2x</option>
+                    <option value="5">5x</option>
+                    <option value="10">10x</option>
+                </select>
+            </div>
+        </div>
+        <svg id="thissvg"/>
+        <div id="map-canvas"></div>
+    </body>
 </html>
