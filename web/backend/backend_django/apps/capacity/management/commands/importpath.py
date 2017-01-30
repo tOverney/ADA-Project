@@ -26,10 +26,12 @@ class Command(BaseCommand):
         trips = pickle.load(open(i, "rb"))
 
         print(len(trips))
-
+        i = 0
         for k, path in trips.items():
             trip_id = k[0]
             stop_id = k[1]
+
+            if i%1000==0: print(i)
 
             try:
                 _, created = Path.objects.get_or_create(
@@ -40,5 +42,7 @@ class Command(BaseCommand):
                 pass
             except Exception as e:
                 self.stdout.write("Error with row {} {} : {}".format(k, path, e))
+
+            i = i+1
 
         self.stdout.write("Done")
