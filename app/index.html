@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style type="text/css">
+        html, body { height: 100%; margin: 0; padding: 0; }
+        #map { height: 100%; }
+
+        #control {
+            position: absolute;
+            width: 310px;
+            right: 50px;
+            top: 50px;
+            padding: 10px;
+            margin: 0px;
+            background-color: #EEEEEE;
+            border: solid #646464 1px;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<div id="control">
+    <div>Time: <span id="time"></span></div>
+    <div>Speed:
+    <select id="speed" onchange="onSpeedChange(this)">
+        <option value="1">1x</option>
+        <option value="2">2x</option>
+        <option value="5">5x</option>
+        <option value="10">10x</option>
+    </select>
+    </div>
+</div>
+<script type="text/javascript">
+
+
+    var map;
+    var segments;
+    var date;
+    var intervalMin = 15;
+    var refreshRate = 1.5;
+    var minSpeed = intervalMin*60;
+    var speed = minSpeed;
+    var colors = ["#1a9850", "#91cf60", "#d9ef8b", "#fee08b", "#fc8d59", "#d73027"];
+
+    var maxValue = 0;
+    function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: {lat: 46.48, lng: 8.13},
+            zoom: 8
+        });
+
+        map.data.loadGeoJson('edges.json');
+        map.data.loadGeoJson('switzerland.json');
+        date = new Date();
+        date.setSeconds(0);
+        date.setMinutes(parseInt(date.getMinutes()/intervalMin)*intervalMin);
+        date.setMonth(0, 30);
+        segments = getNextSegments();
+        map.data.setStyle(getStyle);
+
+        window.setTimeout(update, refreshRate * 1000);
+    }
+
+    function onSpeedChange(opt) {
+        speed = parseInt(opt.value) * minSpeed;
+    }
+
+    function update() {
+        window.setTimeout(update, refreshRate * 1000);
+        // update date/time
+        date.setSeconds(date.getSeconds() + speed);
+
+        // get new segments
+        getNextSegments();
+    }
+
+    function onSuccess(data) {
+        segments = fromJson(data);
+
+        map.data.setStyle(getStyle);
+
+        document.getElementById("time").innerText = date.toTimeString();
+    }
+
+    function onError() {
+        alert("Something went wrong.");
+    }
+
+    function getStyle(feature) {
+        var id = feature.getProperty('edge_id');
+        if(id == 0) {
+            return {
+                fillColor: 'blue',
+                strokeWeight: 1
+            }
+        } else {
+            var colorValue = segments[id];
+            if(!segments[id]) {
+                colorValue = 0;
+            }
+            var c = color(colorValue);
+
+            return {
+                strokeColor: c,
+                strokeWeight: 2
+            };
+        }
+    }
+
+
+    function color(value) {
+        var nbColors = colors.length;
+        var colorId = Math.min(Math.floor(value * nbColors / 1500), nbColors - 1);
+        return colors[colorId];
+    }
+
+    function getNextSegments() {
+
+        var dateAsString = date.toISOString().substring(0, 16);
+
+
+        getJSON("http://localhost:8080/occupancy/"+intervalMin+"/"+ dateAsString, onSuccess, onError);
+
+    }
+
+    function fromJson(json) {
+        var segments = {};
+        maxValue = 0;
+        for(var key in json) {
+            if (json.hasOwnProperty(key)) {
+                segments[key] = json[key];
+                if(json[key] > maxValue) {
+                    maxValue = json[key];
+                }
+            }
+        }
+        return segments
+    }
+
+
+    function getJSON(url, successHandler, errorHandler) {
+        var req = new XMLHttpRequest();
+
+        if('withCredentials' in req) {
+            req.open('GET', url, true);
+            req.onreadystatechange = function() {
+                if (req.readyState === 4) {
+                    if (req.status >= 200 && req.status < 400) {
+                        data = JSON.parse(req.responseText);
+                        successHandler(data);
+                    } else {
+                        errorHandler();
+                    }
+                }
+            };
+            req.send();
+        }
+    }
+
+
+
+</script>
+<script src="http://openlayers.org/api/OpenLayers.js"></script>
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC7nuVovjQYfAQdMIcf0XcPTtOEqIfEnBY&callback=initMap">
+</script>
+</body>
+</html>
