@@ -18,6 +18,10 @@ package object DateUtils {
     }
   }
 
+  implicit class PrettyPrintableDateTime(self: DateTime) {
+    def prettyString(): String = self.toString().dropRight(13)
+  }
+
   case class ValidDateTimeSpan(dateMin: DateTime,
       dateMax: DateTime, interval: Int) {
 

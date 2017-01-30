@@ -7,7 +7,7 @@ import org.apache.commons.io.FileUtils
 import scala.collection.mutable.Map
 
 import aggregation.Engine
-import utils.DateUtils
+import utils.DateUtils.{PrettyPrintableDateTime, formatter}
 
 case class CacheHandler(interval: Int) {
   val cache: Map[DateTime, CachedResult] = Map()
@@ -24,7 +24,7 @@ case class CacheHandler(interval: Int) {
       jsonFile <- dayDir.listFiles
     ) {
       val stringDate = dayDir.getName() + "T" + jsonFile.getName().split('.')(0)
-      val key = DateTime.parse(stringDate, DateUtils.formatter)
+      val key = DateTime.parse(stringDate, formatter)
       val result = FileUtils.readFileToString(jsonFile,
           java.nio.charset.StandardCharsets.UTF_8).parseJson
       val value = CachedResult(key, interval, result)
@@ -40,7 +40,7 @@ case class CacheHandler(interval: Int) {
     println("--- Cache entries ---")
     for (entry <- cache.toList) {
       // We drop the timezone, seconds and milliseconds
-      println(entry._1.toString().dropRight(13) + " -> " +
+      println(entry._1.prettyString() + " -> " +
           entry._2.result.prettyPrint)
     }
     println("---------------------")

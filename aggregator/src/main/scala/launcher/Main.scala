@@ -16,6 +16,9 @@ import scala.io.StdIn
 import ch.megard.akka.http.cors.CorsDirectives._
 import ch.megard.akka.http.cors._
 
+import java.io.File
+import org.apache.commons.io.FileUtils
+
 import caching.CacheHandler
 import utils.DateUtils._
 
@@ -40,16 +43,28 @@ object Main extends App {
   val port = 8080
   val DateRegex = """\d{4}-\d{2}-\d{2}T\d{2}:\d{2}""".r
 
+  // Static files that need to be served to avoid CORS error
+  val edgesJsonFile = new File("../app/edges.json")
+  val edgesJson = FileUtils.readFileToString(edgesJsonFile,
+      java.nio.charset.StandardCharsets.UTF_8)
+
+  val switzerlandJsonFile = new File("../app/switzerland.json")
+  val switzerlandJson = FileUtils.readFileToString(switzerlandJsonFile,
+      java.nio.charset.StandardCharsets.UTF_8)
+
+  val indexFile = new File("../app/index.html")
+  val indexHtml = FileUtils.readFileToString(indexFile,
+      java.nio.charset.StandardCharsets.UTF_8)
+
   val corsSettings = CorsSettings.defaultSettings.copy(
     allowCredentials = false,
     allowedOrigins = HttpOriginRange.*
   )
 
-  val api = cors() {
+  val api = cors(corsSettings) {
     get {
       path("") {
-        complete(HttpEntity(ContentTypes.`text/html(UTF-8)`,
-            "<h1>You're using the REST API wrong"))
+        complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, indexHtml))
       }
     } ~ get {
       pathPrefix("occupancy" / IntNumber / DateRegex) {
@@ -62,7 +77,14 @@ object Main extends App {
             } else {
               val time = DateTime.parse(stringDate, formatter)
               if (time.isAcceptableDate) {
+                val startTime = System.currentTimeMillis
+
                 val res = getRequestedResult(time)
+
+                val elapsedTime = System.currentTimeMillis - startTime
+                val sec = elapsedTime / 1000D
+                println(s"REQ `${time.prettyString}` handled in $sec s")
+
                 complete(HttpEntity(ContentTypes.`application/json`, res))
               } else {
                 complete(StatusCodes.BadRequest)
@@ -75,6 +97,14 @@ object Main extends App {
               e.printStackTrace()
               complete(StatusCodes.BadRequest)
           }
+      }
+    } ~ get {
+      pathPrefix("edges") {
+        complete(HttpEntity(ContentTypes.`application/json`, edgesJson))
+      }
+    } ~ get { 
+      pathPrefix("switzerland") {
+        complete(HttpEntity(ContentTypes.`application/json`, switzerlandJson))
       }
     }
   }
