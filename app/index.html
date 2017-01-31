@@ -70,7 +70,8 @@
             var segments;
             var date;
             var intervalMin = 15;
-            var refreshRate = 1.8;
+            var baseRefreshRate = 1.8;
+            var refreshRate = baseRefreshRate;
             var minSpeed = intervalMin*60;
             var speed = minSpeed;
 
@@ -162,7 +163,7 @@
             }
 
             function onSpeedChange(opt) {
-                speed = parseInt(opt.value) * minSpeed;
+                refreshRate = baseRefreshRate / parseInt(opt.value);
             }
 
 
@@ -272,7 +273,7 @@
               <div class="content">
               <span id="date"></span> at <span id="time"></span>
               
-                <div class="sub header">  SBB Capacity Vizualization </div>
+                <div class="sub header">  SBB Capacity Visualisation </div>
               </div>
             </h3>
             <div class="ui form">
