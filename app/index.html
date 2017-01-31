@@ -45,6 +45,7 @@
             var mapOptions = {
                 center: {lat: 46.70, lng: 8.13},
                 zoom: 8,
+                zoomControl:false,
                 streetViewControl: false,
                 scrollwheel: false,
                 navigationControl: false,
@@ -98,12 +99,6 @@
 
                 border.loadGeoJson('http://localhost:8080/switzerland/');
                 border.setMap(map);
-                // border.setStyle({
-                //     strokeColor: "#757575",
-                //     strokeWeight: 1,
-                //     fillColor:  "black",
-                // })
-
                 border.setStyle({
                     strokeColor: "#757575",
                     fillOpacity: 0.6,
@@ -120,21 +115,30 @@
                 path = d3.geo.path().projection(projection);
         
                 g_=     d3.select('#thissvg')
-                    .attr("width", 900)
-                    .attr("height", 600)
+                    .attr("width", width)
+                    .attr("height", height)
                     .append("g")
                     .attr("class", "edges")
                     .attr("id","pathgroup")
             }
+
+            var startDate = new Date();
+            startDate.setSeconds(0);
+            startDate.setMinutes(0);
+            startDate.setMonth(0, 30);
+
+            var endDate = new Date();
+            endDate.setSeconds(0);
+            endDate.setMinutes(59);
+            endDate.setHours(23);
+            endDate.setMonth(1, 5);
+
             
             function initialize() {
                 init_map();             
                 init_edges();
 
-                date = new Date();
-                date.setSeconds(0);
-                date.setMinutes(parseInt(date.getMinutes()/intervalMin)*intervalMin);
-                date.setMonth(0, 30);
+                date = new Date(startDate)
        
                 function ready(error, us) {
                     console.log(us);
@@ -161,18 +165,25 @@
                 speed = parseInt(opt.value) * minSpeed;
             }
 
+
             function update() {
                 window.setTimeout(update, refreshRate * 1000);
                 date.setSeconds(date.getSeconds() + speed);
+                date.setSeconds(0);
+               
+                if (date.getTime() > endDate.getTime()){
+                    date = new Date(startDate)
+                }
+                // date.setMinutes(parseInt(date.getMinutes()/intervalMin)*intervalMin);
                 getNextSegments();
+
+                document.getElementById("time").innerText = date.getHours() + ":" + date.getMinutes();
+                document.getElementById("date").innerText = date.toDateString();
             }
 
             function onSuccess(data) {
                 segments = fromJson(data);
                 updateEdges()
-                // document.getElementById("time").innerText = date.toTimeString().toUTCString();
-                document.getElementById("time").innerText = date.getHours() + ":" + date.getMinutes();
-                document.getElementById("date").innerText = date.toDateString();
             }
 
             function onError() {
@@ -221,17 +232,16 @@
 
             function updateEdges(){
                 var colorScale = d3.scale.linear()
-                    .domain([0, 2000])
+                    .domain([0, maxValue*0.5])
                     // .interpolate(d3.interpolateHcl)
                     .range([d3.rgb('#00BF15'), d3.rgb('#D90200')]);
 
                 var widthScale = d3.scale.linear()
-                    .domain([0, 3000])
-                    .range([2,6]);
+                    .domain([0, maxValue*0.5])
+                    .range([1,7]);
 
                 g_.selectAll("path")
                 .transition()
-                // .duration(2000)
                 .attr('stroke-width', function(d, i) {
                     if(segments[i]) {
                         return widthScale(segments[i])
