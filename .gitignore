@@ -6,7 +6,7 @@ __pycache__/
 # C extensions
 *.so
 
-aggregator/cache
+aggregator/cache/
 
 # Distribution / packaging
 .Python
