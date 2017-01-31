@@ -16,6 +16,8 @@ package object DateUtils {
     def nextBoundary(interval: Int): DateTime = {
       self + interval.minutes
     }
+
+    def minutesOfDay: Int = self.millisOfDay().get() / 60000
   }
 
   implicit class PrettyPrintableDateTime(self: DateTime) {
@@ -30,8 +32,7 @@ package object DateUtils {
     }
 
     def dateIsIncrementOfInterval(date: DateTime): Boolean = {
-      val minutesOfDay: Int = date.millisOfDay().get() / 60000
-      minutesOfDay % interval == 0
+      date.minutesOfDay % interval == 0
     }
   }
 

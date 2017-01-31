@@ -106,7 +106,7 @@ package object TrainTypes {
       val strType = trainName.split(' ')(0)
 
       strType match {
-        case "S" | "SN"          => S
+        case "S" | "SN" | "S24"  => S
         case "RE" | "TE2"        => RE
         case "ICE"               => ICE
         case "EC" | "Transalpin" => EC
