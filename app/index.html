@@ -30,11 +30,12 @@
             padding: 10px;
             margin: 0px;
             z-index:9999;
-            background-color: #EEEEEE;
-            border: solid #646464 1px;
+           /*# background-color: #EEEEEE;*/
+            /*border: solid #646464 1px;*/
         }
 
         </style>
+        <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.7/semantic.min.css">
         <script src="http://maps.googleapis.com/maps/api/js?key=AIzaSyC7nuVovjQYfAQdMIcf0XcPTtOEqIfEnBY&v=3.exp&sensor=false"></script>
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
         <script src="http://d3js.org/d3.v3.min.js"></script>
@@ -68,7 +69,7 @@
             var segments;
             var date;
             var intervalMin = 15;
-            var refreshRate = 1.5;
+            var refreshRate = 1.8;
             var minSpeed = intervalMin*60;
             var speed = minSpeed;
 
@@ -97,10 +98,17 @@
 
                 border.loadGeoJson('http://localhost:8080/switzerland/');
                 border.setMap(map);
+                // border.setStyle({
+                //     strokeColor: "#757575",
+                //     strokeWeight: 1,
+                //     fillColor:  "black",
+                // })
+
                 border.setStyle({
                     strokeColor: "#757575",
-                    strokeWeight: 1,
-                    fillColor:  "black",
+                    fillOpacity: 0.6,
+                    strokeWeight:0.5,
+                    fillColor:  "white",
                 })
             }
 
@@ -162,7 +170,8 @@
             function onSuccess(data) {
                 segments = fromJson(data);
                 updateEdges()
-                document.getElementById("time").innerText = date.toTimeString();
+                // document.getElementById("time").innerText = date.toTimeString().toUTCString();
+                document.getElementById("time").innerText = date.getHours() + ":" + date.getMinutes();
                 document.getElementById("date").innerText = date.toDateString();
             }
 
@@ -222,8 +231,13 @@
 
                 g_.selectAll("path")
                 .transition()
+                // .duration(2000)
                 .attr('stroke-width', function(d, i) {
-                    return widthScale(segments[i])
+                    if(segments[i]) {
+                        return widthScale(segments[i])
+                    } else{
+                        return 1
+                    }
                 })
                 .attr('stroke', function(d, i) {
                     if(segments[i]) {
@@ -243,16 +257,25 @@
         </script>
     </head>
     <body>
-        <div id="control">
-         <div>Date: <span id="date"></span></div>
-            <div>Time: <span id="time"></span></div>
-            <div>Speed:
-                <select id="speed" onchange="onSpeedChange(this)">
-                    <option value="1">1x</option>
-                    <option value="2">2x</option>
-                    <option value="5">5x</option>
-                    <option value="10">10x</option>
-                </select>
+        <div id="control"  class="ui raised segment">
+            <h3 class="ui header">
+              <div class="content">
+              <span id="date"></span> at <span id="time"></span>
+              
+                <div class="sub header">  SBB Capacity Vizualization </div>
+              </div>
+            </h3>
+            <div class="ui form">
+                
+                <div class="inline field">
+                    <label>Speed</label>
+                    <select id="speed" onchange="onSpeedChange(this)">
+                        <option value="1">1x</option>
+                        <option value="2">2x</option>
+                        <option value="5">5x</option>
+                        <option value="10">10x</option>
+                    </select>
+                </div>
             </div>
         </div>
         <svg id="thissvg"/>
