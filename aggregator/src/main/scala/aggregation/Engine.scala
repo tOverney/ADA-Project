@@ -89,34 +89,17 @@ case class Engine(interval: Int) {
   def aggregateItineraries(itineraries: List[Itinerary],
       intStart: DateTime): ImmuMap[String, Int] = {
     val res: MuMap[String, Int] = MuMap()
+    val intEnd = intStart + interval.minutes
 
-    itineraries.foreach { i =>
-        filterSegments(intStart, i).foreach { seg =>
-          val newAmount = res.getOrElse(seg, 0) + i.passengerAmount
-          res += (seg -> newAmount)
+    itineraries.foreach {
+      case Itinerary(start, stop, path, amnt) =>
+        if (intStart < stop && intEnd > start) {
+          path.foreach { seg =>
+            val newAmount = res.getOrElse(seg, 0) + amnt
+            res += (seg -> newAmount)
+          }
         }
     }
     res.toMap
-  }
-
-  def filterSegments(intStart: DateTime, iti: Itinerary): List[String] = {
-    val Itinerary(start, stop, path, amnt) = iti
-    val intEnd = intStart + interval.minutes
-    if ((intStart < stop && intEnd > start) || path.isEmpty) {
-      Nil
-    } else if (intStart < start && intEnd > stop) {
-      path
-    } else {
-      val routeTime: Int = stop.minutesOfDay - start.minutesOfDay
-      val safeRouteTime = if (routeTime == 0) 1 else routeTime
-      val proportionToTake = path.length * interval / safeRouteTime
-
-      // some of the itinerary is not in that time interval
-      if (intStart > start) {
-        path.takeRight(proportionToTake)
-      } else {
-        path.take(proportionToTake)
-      }
-    }
   }
 }
