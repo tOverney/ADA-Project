@@ -1,33 +1,22 @@
-# Postgresql query
+# Data wrangling and pre-processing
 
-Unfortunately, making the queries directly in django is complicated and takes a long time to run. Instead, we query directly the database using [postico]() and export the results to csv for further processing.
+The processing is separated in several notebooks. You should follow the steps in the following order.
+
+1. Process the output CSV data to strip the stop_id using ```process_csv.ipynb```
+2. Compute the path for each trips ```process_path.ipynb```
+3. Request the capacity for each trip for one week ```process_capacity.ipynb```
 
 
 
-## Retrieve all for one day
-	
-	SELECT
-	agency.id,
-	service_date.id, service_date.date, 
-	route.id, route.short_name, route.long_name,
-	trip.id, trip.headsign, trip.short_name,
-	stop_time.id, stop_time.arrival_time, stop_time.departure_time, stop_time.stop_sequence, 
-	stop.id, stop.stop_id, stop.name, 
-	capacity_path.id, capacity_path.path, 
-	capacity_capacity.id, capacity_capacity.capacity1st, capacity_capacity.capacity2nd
-	
-	FROM service_date
-	LEFT OUTER JOIN trip ON (service_date.service_id = trip.service_id)
-	LEFT OUTER JOIN route ON (route.id = trip.route_id)
-	LEFT OUTER JOIN agency ON (agency.id = route.agency_id)
-	LEFT OUTER JOIN stop_time ON (stop_time.trip_id = trip.id)	
-	LEFT OUTER JOIN stop ON (stop.id = stop_time.stop_id)
-	LEFT OUTER JOIN capacity_path ON (capacity_path.trip_id = trip.id AND capacity_path.stop_id = stop.id)
-	LEFT OUTER JOIN capacity_capacity ON (capacity_capacity.trip_id = trip.id AND capacity_capacity.stop_time_id = stop_time.id AND capacity_capacity.service_date_id = service_date.id)
-	WHERE 
-	(agency.id = 31 OR agency.id = 45 OR agency.id = 52) 
-	AND service_date.date = '2017-02-06'
-	AND stop.stop_id NOT IN ('132','133','134','135','136','137','138', '139', '140', '141','142','174','175', '176')
-	ORDER BY 
-	trip.id ASC,
-	stop_time.stop_sequence ASC
+## Issues encountered
+* Absence of historical data related to the occupancy of the train in switzerland
+	* To overcome this problem, have to rely on several different sources which bring to the table the problem of data integrations
+
+* GTFS data from gtfs.geops.ch
+	* Obscure relations and usage of the specification.
+	* Require reparsing of several fields due to concatenation of several information to respect the uniqueness requirement
+
+* Capacity information from transport.opendata.ch
+	* Severe rate limiting imposes really long processing time
+	* Difficulty to match the GTFS data to the returned one
+	* Capacity limited to only three indicators
