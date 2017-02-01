@@ -35,3 +35,41 @@ That being said here is a plan on how we roughly see things going:
 [^1]: [Swiss Info: Les Suisses se déplacent toujours plus loin pour aller au travail](http://www.swissinfo.ch/fre/les-suisses-se-dÃ©placent-toujours-plus-loin-pour-aller-au-travail/41507140)
 [^2]: [http://data.sbb.ch/](http://data.sbb.ch/page/einstieg/)
 [^3]: [https://opendata.swiss/en/](https://opendata.swiss/en/)
+
+## Followed Pipeline
+### Data sources
+
+* Use General Transit Feed Specification (GTFS) [data](http://gtfs.geops.ch/) provided by [geops.ch](geops.ch) parsed from the official swiss schedule (originally published in HAFAS format) as schedule dataset
+	* Clearly defined [schema](https://developers.google.com/transit/gtfs/) 
+	* Dataset already available
+* Forecast occupancy shown in timetable queries up to 30 days in advance
+	* API readily available provided by [opendata.ch](https://transport.opendata.ch)
+* Swiss railways network & stations map
+	* Readily available in geojson
+	* Improve readability of the map (avoid station to station stroke)
+
+### Data wrangling
+* GTFS integration into PostgreSQL spatial database using the Django framework
+	* Ease of importation using libraries (django-multigtfs)
+	* Ease of creation of a Rest API for exploratory purposes
+* Capacity retrieval using the transport.opendata.ch API
+	* Available for the next 30 days
+	* Wrap the SBB API into a more usable API
+* Computation of the path between two stations using a breadth first search algorithm on the swiss railways network geojson
+* Augmentation of the GTFS data to reflect both occupancy of a train and the route it follows for each trip
+
+### Data processing
+* Aggregation of the dataset to get the amount of passenger on each railway path during a given interval (e.g. 15min).
+	* Finding capacity (number of seats) of each train to have a better view of how many people are travelling using reisezuege.ch
+* Create itinerary from stops of a same trip to get the time where a train is on a certain railway path. Combine this information with the train occupancy and capacity to know how many people are on that train
+* Then combine all people on each railway segment from the individual trip data.
+
+### Data visualization
+* Creation of a REST API backend in scala for data retrieval
+* Cache all raw day data and interval already computed to enable the live view not to lag.
+* Creation of a animated visualization using D3js
+
+
+
+
+
