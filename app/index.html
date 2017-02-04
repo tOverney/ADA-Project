@@ -3,6 +3,41 @@
 <meta charset="utf-8">
     <head>
         <style>
+
+            @-webkit-keyframes redPulse {
+                from {
+                    fill: #ff8e8e;
+                    -webkit-box-shadow: 0 0 9px #333; }
+
+                50% {
+                    fill: #ff4444;
+                    -webkit-box-shadow: 0 0 18px #91bd09; }
+
+                to {
+                    fill: #ff8e8e;
+                    -webkit-box-shadow: 0 0 9px #333; } }
+
+            .stations svg {
+                width: 60px;
+                height: 20px;
+                padding-right: 100px;
+                font: 12px sans-serif; }
+
+            .stations circle {
+                fill: red;
+                stroke: black;
+                stroke-width: 1px;
+                -webkit-animation-name: redPulse;
+                -webkit-animation-duration: 2s;
+                -webkit-animation-iteration-count: infinite; }
+
+            .stations circle:hover {
+                fill: blue;
+                cursor: pointer; }
+
+            .marker_text {
+                fill: black;
+                visibility: hidden; }
         .edges {
           fill: none;
           stroke: #00c;
@@ -14,6 +49,7 @@
             top:0;
             z-index: 50;
         }
+
 
         #map-canvas {
             position:absolute;
@@ -45,13 +81,13 @@
             var mapOptions = {
                 center: {lat: 46.70, lng: 8.13},
                 zoom: 8,
-                zoomControl: false,
+                zoomControl:true,
                 streetViewControl: false,
-                scrollwheel: false,
-                navigationControl: false,
+                scrollwheel: true,
+                navigationControl: true,
                 mapTypeControl: false,
-                scaleControl: false,
-                draggable: false,
+                scaleControl: true,
+                draggable: true,
                 styles: [{"featureType":"all","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"administrative","elementType":"labels.text.fill","stylers":[{"color":"#444444"}]},{"featureType":"administrative.country","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"administrative.country","elementType":"geometry.stroke","stylers":[{"lightness":"12"}]},{"featureType":"administrative.country","elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"administrative.province","elementType":"all","stylers":[{"visibility":"on"},{"lightness":"-100"},{"saturation":"-100"},{"weight":"1.00"}]},{"featureType":"administrative.province","elementType":"geometry","stylers":[{"visibility":"off"}]},{"featureType":"administrative.province","elementType":"geometry.fill","stylers":[{"visibility":"simplified"}]},{"featureType":"administrative.locality","elementType":"all","stylers":[{"visibility":"off"},{"hue":"#ff0000"},{"saturation":"-82"},{"lightness":"5"},{"gamma":"4.71"}]},{"featureType":"administrative.locality","elementType":"labels","stylers":[{"visibility":"off"},{"weight":"0.01"}]},{"featureType":"administrative.neighborhood","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"landscape","elementType":"all","stylers":[{"hue":"#ff0000"},{"visibility":"off"}]},{"featureType":"landscape","elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"landscape.man_made","elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"landscape.natural","elementType":"geometry","stylers":[{"visibility":"off"}]},{"featureType":"landscape.natural.landcover","elementType":"all","stylers":[{"visibility":"on"}]},{"featureType":"landscape.natural.landcover","elementType":"geometry","stylers":[{"visibility":"off"}]},{"featureType":"landscape.natural.landcover","elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"landscape.natural.terrain","elementType":"all","stylers":[{"visibility":"on"}]},{"featureType":"landscape.natural.terrain","elementType":"geometry","stylers":[{"visibility":"on"},{"lightness":"30"},{"saturation":"-100"}]},{"featureType":"landscape.natural.terrain","elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"poi","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"road","elementType":"all","stylers":[{"saturation":-100},{"lightness":45},{"visibility":"off"}]},{"featureType":"road","elementType":"geometry","stylers":[{"visibility":"off"}]},{"featureType":"road","elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"road.highway","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"road.arterial","elementType":"labels.icon","stylers":[{"visibility":"off"}]},{"featureType":"transit","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"water","elementType":"all","stylers":[{"color":"#46bcec"},{"visibility":"on"}]},{"featureType":"water","elementType":"geometry","stylers":[{"visibility":"on"},{"lightness":"10"}]},{"featureType":"water","elementType":"labels","stylers":[{"visibility":"off"}]}]
             };
 
@@ -65,6 +101,8 @@
             var projection;
             var path;
             var g_;
+            var layer;
+            var overlay;
 
             var edges;
             var segments;
@@ -91,7 +129,7 @@
                 console.log(width)
 
                 map = new google.maps.Map(
-                    document.getElementById('map-canvas'), 
+                    document.getElementById('map-canvas'),
                     mapOptions
                 );
 
@@ -109,19 +147,29 @@
             }
 
             function init_edges(){
-                projection=projection=d3.geo.mercator()
+
+                projection=d3.geo.mercator()
                     .scale(40.5 * Math.pow(2, map.getZoom()))
                     .translate([0,0]);
 
                 path = d3.geo.path().projection(projection);
-        
-                g_=     d3.select('#thissvg')
-                    .attr("width", width)
-                    .attr("height", height)
-                    .append("g")
-                    .attr("class", "edges")
-                    .attr("id","pathgroup")
+
+                overlay = new google.maps.OverlayView();
+
+
+                // Add the container when the overlay is added to the map.
+                overlay.onAdd = function() {
+
+                    var svg = d3.select(this.getPanes().overlayLayer).append("svg").attr("width", "2000").attr("height", "2000")
+
+                        svg.append("g")
+                        .attr("class", "edges")
+                        .attr("id", "pathgroup");
+
+                };
             }
+
+
 
             var startDate = new Date();
             startDate.setSeconds(0);
@@ -142,26 +190,74 @@
                 date = new Date(startDate);
        
                 function ready(error, us) {
-                    console.log(us);
-                    g_.selectAll("path")
-                        .data(us.features)
-                        .enter().append("path")
-                        .attr("d", path);
+                    console.log(us.features);
 
-                    var centerPixel = projection([map.getCenter().lng(), map.getCenter().lat()]);
-                    var translate = [(width / 2 - centerPixel[0]), (height / 2 - centerPixel[1])];
-                    d3.select("#pathgroup").attr("transform", "translate(" + translate + ")scale(1)");
+
+                    overlay.draw = function () {
+
+                        //projection = this.getProjection();
+
+                        var pg = d3.select("#pathgroup");
+                        console.log(pg);
+                        var p = d3.select("#pathgroup").selectAll("path")
+                            .data(us.features).enter().append("path").attr("d", path)
+                            .attr('stroke-width', 1)
+                            .attr('color', "#bdbdbd");
+                        console.log(p);
+
+
+
+                        var centerPixel = projection([map.getCenter().lng(), map.getCenter().lat()]);
+                        var translate = [(width / 2 - centerPixel[0]), (height / 2 - centerPixel[1])];
+                        d3.select("#pathgroup").attr("transform", "translate(" + translate + ")scale(1)");
+
+                        var colorScale = d3.scale.linear()
+                            .domain([0, maxValue*0.5])
+                            // .interpolate(d3.interpolateHcl)
+                            .range([d3.rgb('#00BF15'), d3.rgb('#D90200')]);
+
+                        var widthScale = d3.scale.linear()
+                            .domain([0, maxValue*0.5])
+                            .range([1,7]);
+
+                        pg.selectAll("path")
+                            .transition()
+                            .attr('stroke-width', function(d, i) {
+                                if(segments[i]) {
+                                    return widthScale(segments[i])
+                                } else{
+                                    return 1
+                                }
+                            })
+                            .attr('stroke', function(d, i) {
+                                if(segments[i]) {
+                                    return colorScale(segments[i])
+                                } else {
+                                    return '#bdbdbd'
+                                }
+                            })
+                            .style("stroke-linecap", "round")
+
+                        /*function transform(d) {
+                            d = new google.maps.LatLng(d.value[1], d.value[0]);
+                            d = projection.fromLatLngToDivPixel(d);
+                            return d3.select(this)
+                                .style("left", d.x + "px")
+                                .style("top", d.y + "px");
+                        }*/
+
+                    };
+                    overlay.setMap(map);
+
+
 
                     segments = getNextSegments();
                     window.setTimeout(update, refreshRate * 1000);
-                    document.getElementById("time").innerText = dateToHHMMTime(date);
-                    document.getElementById("date").innerText = date.toDateString();
                 }
 
                 queue()
                     .defer(d3.json, url)
                     .await(ready);
-                 
             }
 
             function onSpeedChange(opt) {
@@ -183,23 +279,52 @@
                 document.getElementById("time").innerText = dateToHHMMTime(date);
                 document.getElementById("date").innerText = date.toDateString();
             }
+
             function dateToHHMMTime(date) {
                 var hours = date.getHours();
                 if(hours < 10) {
                     hours = "0" + hours;
                 }
-                var minutes = date.getMinutes();
 
+                var minutes = date.getMinutes();
                 if(minutes < 10) {
                     minutes = "0" + minutes;
                 }
 
                 return hours + ":" + minutes;
-                }
+            }
 
             function onSuccess(data) {
                 segments = fromJson(data);
-                updateEdges()
+                /*overlay.draw = function () {
+                    var colorScale = d3.scale.linear()
+                        .domain([0, maxValue*0.5])
+                        // .interpolate(d3.interpolateHcl)
+                        .range([d3.rgb('#00BF15'), d3.rgb('#D90200')]);
+
+                    var widthScale = d3.scale.linear()
+                        .domain([0, maxValue*0.5])
+                        .range([1,7]);
+
+                    layer.selectAll("path")
+                        .transition()
+                        .attr('stroke-width', function(d, i) {
+                            if(segments[i]) {
+                                return widthScale(segments[i])
+                            } else{
+                                return 1
+                            }
+                        })
+                        .attr('stroke', function(d, i) {
+                            if(segments[i]) {
+                                return colorScale(segments[i])
+                            } else {
+                                return '#bdbdbd'
+                            }
+                        })
+                        .style("stroke-linecap", "round")
+                }*/
+                overlay.draw()
             }
 
             function onError() {
@@ -214,7 +339,7 @@
             var maxValue = 1;
             function fromJson(json) {
                 var segments = {};
-                maxValue = 0
+                maxValue = 0;
                 for(var key in json) {
                     if (json.hasOwnProperty(key)) {
                         segments[key] = json[key];
@@ -304,7 +429,6 @@
                 </div>
             </div>
         </div>
-        <svg id="thissvg"/>
         <div id="map-canvas"></div>
     </body>
 </html>
