@@ -44,6 +44,10 @@ At the end project has been more a data wrangling project than a data visualizat
 <img src="example.gif">
 </p>
 
+A live version can be found at [swisstrains.overney.org](http://swisstrains.overney.org).
+
+Since the presentation, we renabled the google maps controls to zoom and move around.
+
 
 ### Followed Pipeline
 #### Data sources
