@@ -45,7 +45,7 @@
             var mapOptions = {
                 center: {lat: 46.70, lng: 8.13},
                 zoom: 8,
-                zoomControl:false,
+                zoomControl: false,
                 streetViewControl: false,
                 scrollwheel: false,
                 navigationControl: false,
@@ -53,7 +53,7 @@
                 scaleControl: false,
                 draggable: false,
                 styles: [{"featureType":"all","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"administrative","elementType":"labels.text.fill","stylers":[{"color":"#444444"}]},{"featureType":"administrative.country","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"administrative.country","elementType":"geometry.stroke","stylers":[{"lightness":"12"}]},{"featureType":"administrative.country","elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"administrative.province","elementType":"all","stylers":[{"visibility":"on"},{"lightness":"-100"},{"saturation":"-100"},{"weight":"1.00"}]},{"featureType":"administrative.province","elementType":"geometry","stylers":[{"visibility":"off"}]},{"featureType":"administrative.province","elementType":"geometry.fill","stylers":[{"visibility":"simplified"}]},{"featureType":"administrative.locality","elementType":"all","stylers":[{"visibility":"off"},{"hue":"#ff0000"},{"saturation":"-82"},{"lightness":"5"},{"gamma":"4.71"}]},{"featureType":"administrative.locality","elementType":"labels","stylers":[{"visibility":"off"},{"weight":"0.01"}]},{"featureType":"administrative.neighborhood","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"landscape","elementType":"all","stylers":[{"hue":"#ff0000"},{"visibility":"off"}]},{"featureType":"landscape","elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"landscape.man_made","elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"landscape.natural","elementType":"geometry","stylers":[{"visibility":"off"}]},{"featureType":"landscape.natural.landcover","elementType":"all","stylers":[{"visibility":"on"}]},{"featureType":"landscape.natural.landcover","elementType":"geometry","stylers":[{"visibility":"off"}]},{"featureType":"landscape.natural.landcover","elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"landscape.natural.terrain","elementType":"all","stylers":[{"visibility":"on"}]},{"featureType":"landscape.natural.terrain","elementType":"geometry","stylers":[{"visibility":"on"},{"lightness":"30"},{"saturation":"-100"}]},{"featureType":"landscape.natural.terrain","elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"poi","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"road","elementType":"all","stylers":[{"saturation":-100},{"lightness":45},{"visibility":"off"}]},{"featureType":"road","elementType":"geometry","stylers":[{"visibility":"off"}]},{"featureType":"road","elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"road.highway","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"road.arterial","elementType":"labels.icon","stylers":[{"visibility":"off"}]},{"featureType":"transit","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"water","elementType":"all","stylers":[{"color":"#46bcec"},{"visibility":"on"}]},{"featureType":"water","elementType":"geometry","stylers":[{"visibility":"on"},{"lightness":"10"}]},{"featureType":"water","elementType":"labels","stylers":[{"visibility":"off"}]}]
-            }
+            };
 
 
             var width = 1000,
@@ -104,7 +104,7 @@
                     strokeColor: "#757575",
                     fillOpacity: 0.6,
                     strokeWeight:0.5,
-                    fillColor:  "white",
+                    fillColor:  "white"
                 })
             }
 
@@ -139,7 +139,7 @@
                 init_map();             
                 init_edges();
 
-                date = new Date(startDate)
+                date = new Date(startDate);
        
                 function ready(error, us) {
                     console.log(us);
@@ -154,6 +154,8 @@
 
                     segments = getNextSegments();
                     window.setTimeout(update, refreshRate * 1000);
+                    document.getElementById("time").innerText = dateToHHMMTime(date);
+                    document.getElementById("date").innerText = date.toDateString();
                 }
 
                 queue()
@@ -178,9 +180,22 @@
                 // date.setMinutes(parseInt(date.getMinutes()/intervalMin)*intervalMin);
                 getNextSegments();
 
-                document.getElementById("time").innerText = date.getHours() + ":" + date.getMinutes();
+                document.getElementById("time").innerText = dateToHHMMTime(date);
                 document.getElementById("date").innerText = date.toDateString();
             }
+            function dateToHHMMTime(date) {
+                var hours = date.getHours();
+                if(hours < 10) {
+                    hours = "0" + hours;
+                }
+                var minutes = date.getMinutes();
+
+                if(minutes < 10) {
+                    minutes = "0" + minutes;
+                }
+
+                return hours + ":" + minutes;
+                }
 
             function onSuccess(data) {
                 segments = fromJson(data);
