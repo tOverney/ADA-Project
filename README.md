@@ -46,6 +46,8 @@ At the end project has been more a data wrangling project than a data visualizat
 
 A live version can be found at [swisstrains.overney.org](http://swisstrains.overney.org).
 
+You can also run the program locally if you follow [the aggregator's README](aggregator/README.md)
+
 Since the presentation, we renabled the google maps controls to zoom and move around.
 
 
